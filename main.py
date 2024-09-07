@@ -24,10 +24,11 @@ def fetch_random_word(word_list: list, already_used: list) -> str:
 
 
 def guess_letter(result: list, users_guess: list, guess: str) -> int:
+    if guess.upper() not in result:
+        return 1
     while guess.upper() in result:
         modify_result_labels(result, users_guess, guess.upper())
-        return 0
-    return 1
+    return 0
 
 
 def modify_result_labels(old: list, new: list, word: str):
@@ -105,12 +106,12 @@ def print_hangman(tries):
     return stages[tries]
 
 
-def start_game(word: str):
+def start_game(word: str, name: str) -> str:
     users_guess = ['_'] * (len(word))
     result = list(word)
     num_miss_guess = 0
     hangman_result = print_hangman(num_miss_guess)
-    layout = [[sg.Text('The word is chosen, here are the blanks.')],
+    layout = [[sg.Text('Hi ' + name + '. The word is chosen, here are the blanks.')],
               [sg.Text('Enter a Letter.')], [sg.Text(users_guess, key="guess")],
               [sg.InputText(do_not_clear=False)],
               [sg.Text(hangman_result, key="hangman")],
@@ -124,7 +125,8 @@ def start_game(word: str):
                 num_miss_guess = num_miss_guess + guess_letter(result, users_guess, values[0])
                 if num_miss_guess > 6:
                     print('Oh no. You died.')
-                    break
+                    window.close()
+                    return "fail"
                 window['hangman'].update(print_hangman(num_miss_guess))
                 window['guess'].update(users_guess)
                 window.refresh()
@@ -135,13 +137,13 @@ def start_game(word: str):
             break
         if event == sg.WIN_CLOSED or event == 'Cancel':
             break
-
     window.close()
+    return word
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-
+    already_used_words = []
     layout = [[sg.Text('Welcome to Hangman lets start hangin em all!')],
               [sg.Text("What's your name?")],
               [sg.InputText()],
@@ -149,7 +151,7 @@ if __name__ == '__main__':
 
     # Create the Window
     window = sg.Window('Hangman', layout)
-
+    name = ''
     # Event Loop to process "events" and get the "values" of the inputs
     while True:
         event, values = window.read()
@@ -158,9 +160,16 @@ if __name__ == '__main__':
         if event == sg.WIN_CLOSED or event == 'Cancel':
             break
         if event == 'Ok':
-            print_welcome(values[0])
+            name = values[0]
             window.close()
-            start_game(fetch_random_word(read_words("easy"), []))
-            break
+            window = sg.Window('Hangman', [[sg.Text('Going for a round?')],
+                                           [sg.Button('Start'), sg.Button('Cancel')]])
+
+        if event == 'Start':
+            window.close()
+            already_used_words.append(
+                start_game(fetch_random_word(read_words("easy"), already_used_words).upper(), name))
+            window = sg.Window('Hangman', [[sg.Text('Going for a round?')],
+                                           [sg.Button('Start'), sg.Button('Cancel')]])
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

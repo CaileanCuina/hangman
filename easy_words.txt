@@ -1,1 +1,1 @@
-EASY,WORD,TEST
+apple,game,water,table,car,pizza,glass,camera,park,mask,banana,candy,plane,hat,lamp,animal,salad,pasta,basket,cake,jacket,alarm,plant,stairs,train,sand,grass,bread,shark,beach,paper
