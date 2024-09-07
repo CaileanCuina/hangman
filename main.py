@@ -1,9 +1,7 @@
-# This is a sample Python script.
-
-# Press Umschalt+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+import time
 from random import randint
-import numpy as np
+import PySimpleGUI as sg
+from PySimpleGUI import Window
 
 
 def print_welcome(name):
@@ -25,10 +23,9 @@ def fetch_random_word(word_list: list, already_used: list) -> str:
     return chosen_word
 
 
-def guess_letter(result: list, users_guess: list) -> int:
-    guess: str = input("Please enter your guess?")
-    if guess.upper() in result:
-        modify_result_labels(result, users_guess, guess)
+def guess_letter(result: list, users_guess: list, guess: str) -> int:
+    while guess.upper() in result:
+        modify_result_labels(result, users_guess, guess.upper())
         return 0
     return 1
 
@@ -37,7 +34,6 @@ def modify_result_labels(old: list, new: list, word: str):
     idx = old.index(word)
     new[idx] = word
     old[idx] = '_'
-
 
 
 def print_hangman(tries):
@@ -106,28 +102,65 @@ def print_hangman(tries):
         --------
         """,
     ]
-    print(stages[tries])
+    return stages[tries]
 
 
 def start_game(word: str):
-    result = list(word)
     users_guess = ['_'] * (len(word))
-    print('The word is chosen, here are the blanks.')
-    print(users_guess)
+    result = list(word)
     num_miss_guess = 0
-    while result.count('_') != len(result):
-        num_miss_guess = num_miss_guess + guess_letter(result, users_guess)
-        if num_miss_guess > 6:
-            print('Oh no. You died.')
-            return
-        print_hangman(num_miss_guess)
-        print(f'your result: {users_guess}')
-    print('Congratulations! You won.')
+    hangman_result = print_hangman(num_miss_guess)
+    layout = [[sg.Text('The word is chosen, here are the blanks.')],
+              [sg.Text('Enter a Letter.')], [sg.Text(users_guess, key="guess")],
+              [sg.InputText(do_not_clear=False)],
+              [sg.Text(hangman_result, key="hangman")],
+              [sg.Button('Confirm'), sg.Button('Cancel')]]
+    window = sg.Window('Hangman', layout)
+
+    while True:
+        event, values = window.read()
+        if event == 'Confirm':
+            if len(values[0]) == 1:
+                num_miss_guess = num_miss_guess + guess_letter(result, users_guess, values[0])
+                if num_miss_guess > 6:
+                    print('Oh no. You died.')
+                    break
+                window['hangman'].update(print_hangman(num_miss_guess))
+                window['guess'].update(users_guess)
+                window.refresh()
+            else:
+                sg.popup_quick_message("Only one Letter allowed.")
+        if result.count('_') == len(result):
+            sg.popup_ok('Congratulations! You won.')
+            break
+        if event == sg.WIN_CLOSED or event == 'Cancel':
+            break
+
+    window.close()
+
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print('Welcome to Hangman lets start hangin em all!')
-    name = input("Whats your name?")
-    print_welcome(name)
-    start_game(fetch_random_word(read_words("easy"), []))
+
+    layout = [[sg.Text('Welcome to Hangman lets start hangin em all!')],
+              [sg.Text("What's your name?")],
+              [sg.InputText()],
+              [sg.Button('Ok'), sg.Button('Cancel')]]
+
+    # Create the Window
+    window = sg.Window('Hangman', layout)
+
+    # Event Loop to process "events" and get the "values" of the inputs
+    while True:
+        event, values = window.read()
+
+        # if user closes window or clicks cancel
+        if event == sg.WIN_CLOSED or event == 'Cancel':
+            break
+        if event == 'Ok':
+            print_welcome(values[0])
+            window.close()
+            start_game(fetch_random_word(read_words("easy"), []))
+            break
+
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
